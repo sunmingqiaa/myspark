@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration PUBLIC "-//log4j/log4j Configuration//EN" "log4j.dtd">
+
+<log4j:configuration>
+
+    <!-- 日志输出到控制台 -->
+    <appender name="console" class="org.apache.log4j.ConsoleAppender">
+        <!-- 日志输出格式 -->
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" 
+                   value="%d{yyyy-MM-dd HH:mm:ss SSS}] %-5p %c %m%n"/>
+        </layout>
+
+        <!--过滤器设置输出的级别-->
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <!-- 设置日志输出的最小级别 -->
+            <param name="levelMin" value="INFO"/>
+            <!-- 设置日志输出的最大级别 -->
+            <param name="levelMax" value="ERROR"/>
+            <param name="AcceptOnMatch" value="true"/>
+        </filter>
+    </appender>
+
+
+    <!-- 输出日志到文件 -->
+    <appender name="logfile" class="org.apache.log4j.RollingFileAppender">
+        <!-- 输出文件全路径名-->
+        <param name="File" value="app.log"/>
+        
+        <param name="ImmediateFlush" value="true"/>
+        <!-- 设置当日志文件达到此阈值的时候自动回滚，单位可以是KB，MB，GB，默认单位是KB，默认值是：10MB -->
+        <param name="MaxFileSize" value="100MB"/>
+        <!-- 保存备份日志的最大个数，默认值是：1  -->
+        <param name="MaxBackupIndex" value="5"/>
+        <!-- 日志输出格式 -->
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss SSS}] %-5p %c %m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMax" value="FATAL"/>
+            <param name="LevelMin" value="INFO"/>
+        </filter>
+    </appender>
+
+    <!--    系统发生错误和告警日志输出日志文件-->
+<appender name="error" class="org.apache.log4j.RollingFileAppender">
+    <!-- 输出文件全路径名-->
+    <param name="File" value="./logs/error.log"/>
+
+    <param name="ImmediateFlush" value="true"/>
+    <!-- 设置当日志文件达到此阈值的时候自动回滚，单位可以是KB，MB，GB，默认单位是KB，默认值是：10MB -->
+    <param name="MaxFileSize" value="100MB"/>
+    <!-- 保存备份日志的最大个数，默认值是：1  -->
+    <param name="MaxBackupIndex" value="5"/>
+    <!-- 日志输出格式 -->
+    <layout class="org.apache.log4j.PatternLayout">
+        <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss SSS}] %-5p %c %m%n"/>
+    </layout>
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">
+<!--        致命-->
+        <param name="LevelMax" value="FATAL"/>
+        <param name="LevelMin" value="INFO"/>
+    </filter>
+</appender>
+    
+<!--   异步处理所有日志信息-->
+    <appender name="async" class="org.apache.log4j.AsyncAppender">
+        <param name="BufferSize" value="100000"/>
+        <param name="blocking" value="true"/>
+<!--        将日志输出到系统文件-->
+        <appender-ref ref="logfile"/>
+<!--        将日志输出到错误日志文件-->
+        <appender-ref ref="error"/>
+    </appender>
+
+<!--定义数据库appender-->
+    <appender name="insertSparkDataInfo" class="org.apache.log4j.jdbc.JDBCAppender">
+        <param name="URL" value="jdbc:mysql://localhost:3306/test?characterEncoding=utf8"/>
+        <param name="driver" value="com.mysql.jdbc.Driver"/>
+        <param name="user" value="root"/>
+        <param name="password" value="123456"/>
+      <!--  <param name="sql" value="INSERT INTO sparkDataInfo (topicName,applicationId,inRate,outRate,successNumRecord,failureNumRecord,batchStartTime,batchEndTime,avgDelayTimePerCount) VALUES
+        ('%X{topicName}','%X{applicationId}','%X{inRate}','%X{outRate}','%X{successNumRecord}','%X{failureNumRecord}','%X{batchStartTime}','%X{batchEndTime}','%X{avgDelayTimePerCount}')"/>
+        <param name="layout" value="org.apache.log4j.PatternLayout"/>-->
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="INSERT INTO sparkDataInfo (topicName,applicationId,inRate,outRate,successNumRecord,failureNumRecord,batchStartTime,batchEndTime,avgDelayTimePerCount) VALUES
+        ('%X{topicName}','%X{applicationId}','%X{inRate}','%X{outRate}','%X{successNumRecord}','%X{failureNumRecord}','%X{batchStartTime}','%X{batchEndTime}','%X{avgDelayTimePerCount}')" />
+        </layout>
+    </appender>
+
+    <!--定义数据库appender,更新-->
+    <appender name="updateSparkDataInfo" class="org.apache.log4j.jdbc.JDBCAppender">
+        <param name="URL" value="jdbc:mysql://localhost:3306/test"/>
+        <param name="driver" value="com.mysql.jdbc.Driver"/>
+        <param name="user" value="root"/>
+        <param name="password" value="123456"/>
+        <param name="sql"
+               value="UPDATE sparkDataInfo SET inRate='%X{inRate}', outRate=%X{outRate}', where batchId='%X{batchId}' and applicationId='%X{applicationId}' and topicName='%X{topicName}'"/>
+<!--        <param name="layout" value="org.apache.log4j.WriterAppender"/>-->
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%-5p][%d{yyyy-MM-dd HH:mm:ss,SSS}][%c] :%m%n" />
+        </layout>
+    </appender>
+<!--    输出到邮箱-->
+<!--
+    <appender name="mailMAILAppender" class="org.apache.log4j.net.SMTPAppender">
+        <param name="threshold" value="debug" />
+        <param name="BufferSize" value="1" />
+        <param name="From" value="374060171@qq.com" />
+        <param name="SMTPHost" value="www.baidu.com" />
+        <param name="Subject" value="log4j-Message" />
+        <param name="To" value="374060171@qq.com" />
+        <layout class="org.apache.log4j.PatternLayout">
+       <param name="ConversionPattern" value="[%-5p][%d{yyyy-MM-dd HH:mm:ss,SSS}][%c] :%m%n" />
+       </layout>
+     </appender>-->
+    <!--
+        1. 指定logger的设置，additivity是否遵循缺省的继承机制
+        2. 当additivity="false"时，root中的配置就失灵了，不遵循缺省的继承机制
+        3. 代码中使用Logger.getLogger("logTest")获得此输出器，且不会使用根输出器
+    -->
+
+    <!--<logger name="jdvaAppender.SparkDatabaseLogger" additivity="true">
+        <level value ="INFO"/>
+        <appender-ref ref="insertSparkDataInfo"/>
+    </logger>
+-->
+
+
+
+    <!-- 根logger的设置，若代码中未找到指定的logger，则会根据继承机制，使用根logger-->
+    <root>
+        <appender-ref ref="console"/>
+    </root>
+</log4j:configuration>
+
